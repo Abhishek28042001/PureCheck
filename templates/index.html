@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PureCheck - AI Food Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 135, 135, 0.2), transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(138, 180, 248, 0.2), transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 35px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 25px 70px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+        }
+
+        h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 1.6em;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            border-image: linear-gradient(90deg, #667eea, #764ba2);
+            border-image-slice: 1;
+            padding-bottom: 12px;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 20px;
+            padding: 50px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #eef2ff 100%);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.1);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .upload-area:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+
+        .upload-area:hover {
+            background: linear-gradient(135deg, #eef0ff 0%, #e0e7ff 100%);
+            border-color: #764ba2;
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+        }
+
+        .upload-area.dragover {
+            background: linear-gradient(135deg, #e0e5ff 0%, #ddd6fe 100%);
+            border-color: #764ba2;
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(118, 75, 162, 0.3);
+        }
+
+        #imageInput {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+            animation: float 3s ease-in-out infinite;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 35px;
+            border-radius: 30px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4);
+        }
+
+        /* Results Section */
+        .results-section {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 20px;
+            padding-right: 5px;
+        }
+
+        .results-section::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .results-section::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .results-section::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            border-color: #cbd5e1;
+        }
+
+        .result-card h3 {
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .score-display {
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .score-display::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .score-number {
+            font-size: 5em;
+            font-weight: 700;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .grade-badge {
+            display: inline-block;
+            padding: 12px 35px;
+            border-radius: 30px;
+            font-size: 1.6em;
+            font-weight: 700;
+            margin: 15px 0;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .grade-A { 
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .grade-B { 
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+        .grade-C { 
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        .grade-D { 
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        }
+        .grade-E { 
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            animation: shake 0.5s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .nutrient-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+        }
+
+        .nutrient-row:hover {
+            background: linear-gradient(90deg, #f8fafc, transparent);
+            padding-left: 20px;
+        }
+
+        .nutrient-row:last-child {
+            border-bottom: none;
+        }
+
+        .nutrient-row strong {
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .nutrient-row span {
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        .warning-badge {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 8px 18px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 5px;
+            font-size: 0.9em;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .warning-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .positive-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 8px 18px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 5px;
+            font-size: 0.9em;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .positive-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Chat Section - Floating */
+        .chat-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 400px;
+            height: 600px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .chat-widget.open {
+            display: flex;
+        }
+
+        .chat-widget.minimized {
+            height: 60px;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px 20px;
+            border-radius: 25px 25px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .chat-header h3 {
+            margin: 0;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .chat-header-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .chat-control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .chat-toggle-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 65px;
+            height: 65px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.8em;
+            cursor: pointer;
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+            z-index: 999;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-toggle-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        .chat-toggle-btn.hidden {
+            display: none;
+        }
+
+        .chat-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 0.7em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            flex: 1;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #eef2ff 100%);
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 85%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .message strong {
+            font-weight: 600;
+            color: inherit;
+        }
+
+        .message ul, .message ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .message li {
+            margin: 4px 0;
+        }
+
+        .message p {
+            margin: 8px 0;
+        }
+
+        .message p:first-child {
+            margin-top: 0;
+        }
+
+        .message p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message code {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .message .highlight {
+            background: rgba(255, 235, 59, 0.3);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+            border-bottom-right-radius: 5px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .bot-message {
+            background: white;
+            border: 1px solid #e2e8f0;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+            color: #1e293b;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 8px;
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+
+        #chatInput {
+            flex: 1;
+            padding: 10px 16px;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            font-size: 0.95em;
+            outline: none;
+            background: #f8fafc;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        #chatInput:focus {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .chat-send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .chat-send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(102, 126, 234, 0.4);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 15px;
+            margin: 15px 0;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            border: 3px solid white;
+            transition: transform 0.3s ease;
+        }
+
+        .preview-image:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-weight: 400;
+            font-size: 0.95em;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .panel {
+                margin-bottom: 20px;
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .score-number {
+                font-size: 3.5em;
+            }
+
+            .chat-widget {
+                width: 90%;
+                right: 5%;
+                bottom: 20px;
+            }
+
+            .chat-toggle-btn {
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Main Panel: Upload and Results -->
+        <div class="panel">
+            <h1>🥗 PureCheck</h1>
+            <p class="subtitle">✨ AI-Powered Food Nutrition Analyzer</p>
+
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📸</div>
+                    <h3 style="color: #1e293b; margin-bottom: 8px;">Upload Food Product Image</h3>
+                    <p style="color: #64748b;">Drag and drop or click to select</p>
+                    <input type="file" id="imageInput" accept="image/*">
+                </div>
+                <img id="previewImage" class="preview-image" style="display: none;">
+                <div>
+                    <button class="btn" onclick="document.getElementById('imageInput').click()">📤 Select Image</button>
+                    <button class="btn btn-secondary" id="clearBtn" onclick="clearResults()" style="display: none;">🗑️ Clear</button>
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div class="loading" id="loadingIndicator">
+                <div class="spinner"></div>
+                <p style="font-weight: 600; color: #667eea;">🔍 Analyzing product with AI...</p>
+            </div>
+        </div>
+
+        <!-- Results Section (Initially Hidden) -->
+        <div class="panel" id="resultsPanel" style="display: none;">
+            <h2>📊 Analysis Results</h2>
+            
+            <!-- INR Score -->
+            <div class="score-display" id="scoreDisplay"></div>
+
+            <!-- Product Details -->
+            <div class="result-card" id="productDetails"></div>
+
+            <!-- Nutritional Analysis -->
+            <div class="result-card" id="nutritionAnalysis"></div>
+
+            <!-- Warnings and Claims -->
+            <div class="result-card" id="warningsClaims"></div>
+        </div>
+    </div>
+
+    <!-- Floating Chat Toggle Button -->
+    <button class="chat-toggle-btn" id="chatToggleBtn" onclick="toggleChat()">
+        💬
+        <span class="chat-badge" id="chatBadge" style="display: none;">1</span>
+    </button>
+
+    <!-- Floating Chat Widget -->
+    <div class="chat-widget" id="chatWidget">
+        <div class="chat-header" onclick="toggleMinimize()">
+            <h3>💬 AI Chat Assistant</h3>
+            <div class="chat-header-controls">
+                <button class="chat-control-btn" id="minimizeBtn" onclick="toggleMinimize(); event.stopPropagation();" title="Minimize">
+                    ▼
+                </button>
+                <button class="chat-control-btn" onclick="toggleChat(); event.stopPropagation();" title="Close">
+                    ✕
+                </button>
+            </div>
+        </div>
+        
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot-message">
+                    <p><strong>👋 Hello!</strong></p>
+                    <p>I'm your FSSAI nutrition assistant. I can help you with:</p>
+                    <ul>
+                        <li>📊 Food product analysis</li>
+                        <li>📋 FSSAI regulations & guidelines</li>
+                        <li>🥗 Nutrition information</li>
+                        <li>⚖️ INR scoring system</li>
+                    </ul>
+                    <p>Upload a product image to get started! 🚀</p>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <input type="text" id="chatInput" placeholder="Type your message..." onkeypress="handleChatKeyPress(event)">
+                <button class="chat-send-btn" onclick="sendMessage()">📤</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const imageInput = document.getElementById('imageInput');
+        const previewImage = document.getElementById('previewImage');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const resultsPanel = document.getElementById('resultsPanel');
+        const clearBtn = document.getElementById('clearBtn');
+        const chatWidget = document.getElementById('chatWidget');
+        const chatToggleBtn = document.getElementById('chatToggleBtn');
+        const chatBadge = document.getElementById('chatBadge');
+        const minimizeBtn = document.getElementById('minimizeBtn');
+
+        // Chat widget functions
+        function toggleChat() {
+            chatWidget.classList.toggle('open');
+            chatToggleBtn.classList.toggle('hidden');
+            chatBadge.style.display = 'none';
+            
+            if (chatWidget.classList.contains('open')) {
+                chatWidget.classList.remove('minimized');
+                minimizeBtn.textContent = '▼';
+            }
+        }
+
+        function toggleMinimize() {
+            chatWidget.classList.toggle('minimized');
+            minimizeBtn.textContent = chatWidget.classList.contains('minimized') ? '▲' : '▼';
+        }
+
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleImageUpload(files[0]);
+            }
+        });
+
+        uploadArea.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleImageUpload(e.target.files[0]);
+            }
+        });
+
+        async function handleImageUpload(file) {
+            // Preview image
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // Show loading, hide results
+            loadingIndicator.style.display = 'block';
+            resultsPanel.style.display = 'none';
+
+            // Upload to server
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResults(data);
+                    
+                    // Show chat notification
+                    if (!chatWidget.classList.contains('open')) {
+                        chatBadge.style.display = 'flex';
+                    }
+                    
+                    // Add formatted analysis message
+                    const analysisMsg = `
+                        <strong>Analysis Complete!</strong>
+                        
+                        📊 <strong>Product:</strong> ${data.product_data.product_name || 'Unknown'}
+                        🏷️ <strong>Brand:</strong> ${data.product_data.brand || 'Unknown'}
+                        
+                        <strong>INR Score:</strong> ${data.inr_result.inr_score.toFixed(1)}/100
+                        <strong>Grade ${data.inr_result.grade}</strong>
+                        
+                        ${data.inr_result.health_warnings.length > 0 ? 
+                            '⚠️ <strong>Warnings:</strong>\n- ' + data.inr_result.health_warnings.join('\n- ') : ''}
+                        
+                        ${data.inr_result.positive_claims.length > 0 ? 
+                            '✅ <strong>Positive:</strong>\n- ' + data.inr_result.positive_claims.join('\n- ') : ''}
+                        
+                        💬 Ask me anything about this product!
+                    `.trim();
+                    
+                    addChatMessage(analysisMsg, 'bot');
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                    loadingIndicator.style.display = 'none';
+                }
+            } catch (error) {
+                alert('Error uploading image: ' + error.message);
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        function displayResults(data) {
+            loadingIndicator.style.display = 'none';
+            resultsPanel.style.display = 'block';
+            clearBtn.style.display = 'inline-block';
+
+            const { product_data, analysis, inr_result } = data;
+
+            // Score Display
+            const gradeClass = `grade-${inr_result.grade}`;
+            document.getElementById('scoreDisplay').innerHTML = `
+                <div class="score-number">${inr_result.inr_score.toFixed(1)}</div>
+                <div class="grade-badge ${gradeClass}">Grade ${inr_result.grade}</div>
+                <p style="position: relative; z-index: 1;">${inr_result.interpretation}</p>
+            `;
+
+            // Product Details
+            document.getElementById('productDetails').innerHTML = `
+                <h3>Product Information</h3>
+                <div class="nutrient-row">
+                    <strong>Product Name:</strong>
+                    <span>${product_data.product_name || 'Not Available'}</span>
+                </div>
+                <div class="nutrient-row">
+                    <strong>Brand:</strong>
+                    <span>${product_data.brand || 'Not Available'}</span>
+                </div>
+                <div class="nutrient-row">
+                    <strong>Type:</strong>
+                    <span>${product_data.product_type}</span>
+                </div>
+            `;
+
+            // Nutrition Analysis
+            const nutrients = product_data.nutritional_info_per_100g;
+            document.getElementById('nutritionAnalysis').innerHTML = `
+                <h3>Nutritional Information (per 100g)</h3>
+                <div class="nutrient-row">
+                    <strong>Energy:</strong>
+                    <span>${nutrients.energy_kcal} kcal (${analysis.energy_kcal.percent_of_inr.toFixed(1)}% of INR)</span>
+                </div>
+                <div class="nutrient-row">
+                    <strong>Sugars:</strong>
+                    <span>${nutrients.sugars_g} g (${analysis.sugars_g.percent_of_inr.toFixed(1)}% of INR)</span>
+                </div>
+                <div class="nutrient-row">
+                    <strong>Saturated Fat:</strong>
+                    <span>${nutrients.saturated_fat_g} g (${analysis.saturated_fat_g.percent_of_inr.toFixed(1)}% of INR)</span>
+                </div>
+                <div class="nutrient-row">
+                    <strong>Sodium:</strong>
+                    <span>${nutrients.sodium_mg} mg (${analysis.sodium_mg.percent_of_inr.toFixed(1)}% of INR)</span>
+                </div>
+                <div class="nutrient-row">
+                    <strong>Protein:</strong>
+                    <span>${nutrients.protein_g} g (${analysis.protein_g.percent_of_inr.toFixed(1)}% of INR)</span>
+                </div>
+                ${nutrients.fiber_g !== "Not Available" ? `
+                <div class="nutrient-row">
+                    <strong>Fiber:</strong>
+                    <span>${nutrients.fiber_g} g (${(analysis.fiber_g?.percent_of_inr || 0).toFixed(1)}% of INR)</span>
+                </div>
+                ` : ''}
+            `;
+
+            // Warnings and Claims
+            let warningsHtml = '<h3>Health Assessment</h3>';
+            
+            if (inr_result.health_warnings && inr_result.health_warnings.length > 0) {
+                warningsHtml += '<p><strong>⚠️ Health Warnings:</strong></p>';
+                inr_result.health_warnings.forEach(warning => {
+                    warningsHtml += `<span class="warning-badge">${warning}</span>`;
+                });
+            }
+
+            if (inr_result.positive_claims && inr_result.positive_claims.length > 0) {
+                warningsHtml += '<p style="margin-top: 15px;"><strong>✨ Positive Attributes:</strong></p>';
+                inr_result.positive_claims.forEach(claim => {
+                    warningsHtml += `<span class="positive-badge">${claim}</span>`;
+                });
+            }
+
+            if (inr_result.health_warnings.length === 0 && inr_result.positive_claims.length === 0) {
+                warningsHtml += '<p style="color: #666;">No specific warnings or claims.</p>';
+            }
+
+            document.getElementById('warningsClaims').innerHTML = warningsHtml;
+
+            // Scroll to results
+            resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function clearResults() {
+            resultsPanel.style.display = 'none';
+            previewImage.style.display = 'none';
+            previewImage.src = '';
+            imageInput.value = '';
+            clearBtn.style.display = 'none';
+
+            // Clear session on server
+            fetch('/clear-session', { method: 'POST' });
+
+            // Add chat message
+            addChatMessage('Session cleared. Upload a new product to analyze!', 'bot');
+        }
+
+        // Chat Functions
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message to chat
+            addChatMessage(message, 'user');
+            input.value = '';
+
+            // Show typing indicator
+            const typingId = addChatMessage('Typing...', 'bot');
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+
+                // Remove typing indicator
+                document.getElementById(typingId).remove();
+
+                if (data.success) {
+                    addChatMessage(data.response, 'bot');
+                } else {
+                    addChatMessage('Error: ' + (data.error || 'Unknown error'), 'bot');
+                }
+            } catch (error) {
+                document.getElementById(typingId).remove();
+                addChatMessage('Error: ' + error.message, 'bot');
+            }
+        }
+
+        function addChatMessage(text, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            const messageId = 'msg-' + Date.now();
+            messageDiv.id = messageId;
+            messageDiv.className = `message ${sender}-message`;
+            
+            // Format bot messages with HTML
+            if (sender === 'bot') {
+                messageDiv.innerHTML = formatBotMessage(text);
+            } else {
+                messageDiv.textContent = text;
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return messageId;
+        }
+
+        function formatBotMessage(text) {
+            // Convert markdown-style formatting to HTML
+            let formatted = text;
+            
+            // Add emoji at the start if not present
+            if (!(/^[\u{1F300}-\u{1F9FF}]/u.test(text))) {
+                formatted = '🤖 ' + formatted;
+            }
+            
+            // Convert **bold** to <strong>
+            formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            
+            // Convert bullet points (- or *) to HTML list
+            if (formatted.includes('\n- ') || formatted.includes('\n* ')) {
+                const lines = formatted.split('\n');
+                let inList = false;
+                let result = [];
+                
+                for (let line of lines) {
+                    if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+                        if (!inList) {
+                            result.push('<ul>');
+                            inList = true;
+                        }
+                        result.push('<li>' + line.trim().substring(2) + '</li>');
+                    } else {
+                        if (inList) {
+                            result.push('</ul>');
+                            inList = false;
+                        }
+                        if (line.trim()) {
+                            result.push('<p>' + line + '</p>');
+                        }
+                    }
+                }
+                if (inList) {
+                    result.push('</ul>');
+                }
+                formatted = result.join('');
+            } else {
+                // Convert line breaks to paragraphs
+                const paragraphs = formatted.split('\n\n');
+                formatted = paragraphs.map(p => p.trim() ? '<p>' + p.replace(/\n/g, '<br>') + '</p>' : '').join('');
+            }
+            
+            // Highlight important terms
+            formatted = formatted.replace(/\b(INR Score|Grade [A-E]|Warning|Important|Note|FSSAI)\b/g, '<span class="highlight">$1</span>');
+            
+            // Add emojis for specific terms
+            formatted = formatted.replace(/\b(Warning|warning)\b/g, '⚠️ $1');
+            formatted = formatted.replace(/\b(Good|Excellent|Great)\b/g, '✅ $1');
+            formatted = formatted.replace(/\b(High|Excess)\b/g, '🔴 $1');
+            formatted = formatted.replace(/\b(protein|Protein)\b/g, '💪 $1');
+            formatted = formatted.replace(/\b(fiber|Fiber)\b/g, '🌾 $1');
+            
+            return formatted;
+        }
+    </script>
+</body>
+</html>
